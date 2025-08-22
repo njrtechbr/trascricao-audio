@@ -1,0 +1,81 @@
+{
+  "appId": "com.transcricao-ia.app",
+  "productName": "Transcrição de Áudio com IA",
+  "copyright": "Copyright © 2024 Nereu Jr. Todos os direitos reservados.",
+  "directories": {
+    "output": "dist",
+    "buildResources": "assets"
+  },
+  "files": [
+    "dist-electron/**/*",
+    "dist/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "dist-electron/main.js"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "assets/icon.ico",
+    "publisherName": "Nereu Jr",
+    "verifyUpdateCodeSignature": false,
+    "sign": null,
+    "signAndEditExecutable": false
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "assets/icon.icns",
+    "category": "public.app-category.productivity"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "assets/icon.png",
+    "category": "AudioVideo"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Transcrição de Áudio com IA",
+    "menuCategory": "Produtividade",
+    "runAfterFinish": true,
+    "allowElevation": false,
+    "displayLanguageSelector": false,
+    "installerHeader": "Desenvolvido por Nereu Jr",
+    "installerSidebar": "Contato: contato@nereujr.com.br | (77) 99809-4395"
+  },
+  "dmg": {
+    "title": "Transcrição de Áudio com IA",
+    "backgroundColor": "#4F46E5"
+  },
+  "publish": null
+}
