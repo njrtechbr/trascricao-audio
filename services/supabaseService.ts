@@ -750,265 +750,132 @@ class SupabaseService {
   }
 
   /**
-   * Salva uma transcrição completa com embedding no banco de dados
+   * Orquestra o salvamento completo do resultado da transcrição (otimizado)
    */
-  async salvarTranscricaoComEmbeddingCompleto(transcricao: string, nomeArquivo: string): Promise<boolean> {
+  async salvarResultadoCompleto(transcricaoData: any[], textoTranscritoCompleto: string, audioFile: File): Promise<void> {
+    console.log('🚀 [SUPABASE] Iniciando salvamento completo e otimizado do resultado...');
+    const startTime = Date.now();
+
+    try {
+      // Executa as duas tarefas de salvamento em paralelo para otimizar o tempo
+      await Promise.all([
+        this.salvarTranscricao(textoTranscritoCompleto, audioFile.name, audioFile.size),
+        this.salvarTranscricaoComEmbeddings(transcricaoData, audioFile.name)
+      ]);
+    } catch (error) {
+      console.error('❌ [SUPABASE] Erro durante o salvamento em paralelo do resultado completo:', error);
+      // Mesmo com erro, o processo não deve parar, mas o erro é logado.
+      // Dependendo da criticidade, um throw aqui pode ser apropriado.
+    }
+
+    const endTime = Date.now();
+    console.log(`🎉 [SUPABASE] Salvamento completo do resultado finalizado em ${(endTime - startTime) / 1000}s.`);
+  }
+
+  /**
+   * Salva a transcrição principal com seu embedding.
+   */
+  private async salvarTranscricao(transcricao: string, nomeArquivo: string, tamanhoArquivo: number): Promise<boolean> {
     if (!this.conectado || !this.cliente) {
       console.warn('Supabase não está conectado');
       return false;
     }
 
     try {
-      console.log(`🔄 [SUPABASE] Salvando transcrição completa com embedding: ${nomeArquivo}`);
+      console.log(`🔄 [SUPABASE] Salvando transcrição principal: ${nomeArquivo}`);
       
-      // Validar e gerar embedding para o conteúdo completo da transcrição
-      if (!transcricao || transcricao.trim().length === 0) {
-        console.warn('Transcrição vazia detectada, pulando salvamento com embedding');
+      const textoLimpo = transcricao?.trim();
+      if (!textoLimpo || textoLimpo.length === 0) {
+        console.warn('Transcrição vazia detectada, pulando salvamento.');
         return false;
       }
       
-      const transcriptionEmbedding = await embeddingService.gerarEmbedding(transcricao.trim());
+      const transcriptionEmbedding = await embeddingService.gerarEmbedding(textoLimpo);
       
       const { error } = await this.cliente
         .from('transcricoes')
         .insert({
-          transcricao: transcricao,
+          transcricao: textoLimpo,
           nome_arquivo: nomeArquivo,
-          transcricao_embedding: transcriptionEmbedding,
+          tamanho_arquivo: tamanhoArquivo,
+          embedding: transcriptionEmbedding, // Corrigido para 'embedding'
           criado_em: new Date().toISOString()
         });
 
       if (error) {
-        console.error('❌ [SUPABASE] Erro ao salvar transcrição com embedding:', error);
+        console.error('❌ [SUPABASE] Erro ao salvar transcrição principal:', error);
         return false;
       }
 
-      console.log('✅ [SUPABASE] Transcrição salva com embedding com sucesso');
+      console.log('✅ [SUPABASE] Transcrição principal salva com sucesso');
       return true;
     } catch (error) {
-      console.error('❌ [SUPABASE] Erro ao salvar transcrição com embedding:', error);
+      console.error('❌ [SUPABASE] Erro crítico ao salvar transcrição principal:', error);
       return false;
     }
   }
 
   /**
-   * Salva uma transcrição no banco de dados
+   * Salva as palavras da transcrição com seus embeddings em lote (Otimizado)
    */
-  async salvarTranscricao(dados: { nomeArquivo: string; transcricao: string; tamanhoArquivo: number }): Promise<boolean> {
-    console.log('💾 [SUPABASE] Iniciando salvamento de transcrição...');
-    console.log('📋 [SUPABASE] Dados para salvamento:', {
-      nomeArquivo: dados.nomeArquivo,
-      tamanhoTranscricao: dados.transcricao.length,
-      tamanhoArquivo: `${((dados.tamanhoArquivo || 0) / 1024 / 1024).toFixed(2)} MB`
-    });
-    
+  private async salvarTranscricaoComEmbeddings(transcricao: any[], nomeArquivo: string): Promise<boolean> {
     if (!this.conectado || !this.cliente) {
-      console.error('❌ [SUPABASE] Supabase não está conectado para salvamento');
-      console.error('❌ [SUPABASE] Status:', {
-        conectado: this.conectado,
-        cliente: !!this.cliente,
-        inicializado: this.isInitialized
-      });
+      console.warn('Supabase não está conectado');
+      return false;
+    }
+
+    if (!transcricao || !Array.isArray(transcricao) || transcricao.length === 0) {
+      console.error('❌ [SUPABASE] Transcrição inválida ou vazia para salvar com embeddings.');
       return false;
     }
 
     try {
       const startTime = Date.now();
-      console.log('🔄 [SUPABASE] Enviando dados para tabela transcricoes...');
-      
-      // Validar e gerar embedding da transcrição
-      console.log('🧠 [SUPABASE] Gerando embedding da transcrição...');
-      let transcricaoEmbedding = null;
-      if (dados.transcricao && dados.transcricao.trim().length > 0) {
-        transcricaoEmbedding = await embeddingService.gerarEmbedding(dados.transcricao.trim());
-      } else {
-        console.warn('Transcrição vazia detectada, salvando sem embedding');
-      }
-      
-      const dadosParaInserir = {
-        nome_arquivo: dados.nomeArquivo,
-        transcricao: dados.transcricao,
-        tamanho_arquivo: dados.tamanhoArquivo,
-        transcricao_embedding: transcricaoEmbedding,
-        criado_em: new Date().toISOString()
-      };
-      
-      console.log('📤 [SUPABASE] Estrutura dos dados:', {
-        nome_arquivo: dadosParaInserir.nome_arquivo,
-        transcricao_length: dadosParaInserir.transcricao.length,
-        tamanho_arquivo: dadosParaInserir.tamanho_arquivo,
-        criado_em: dadosParaInserir.criado_em
-      });
+      console.log(`🔄 [SUPABASE] Otimizado: Iniciando salvamento de ${transcricao.length} palavras com embeddings.`);
 
-      const { error } = await this.cliente
-        .from('transcricoes')
-        .insert(dadosParaInserir);
-
-      const saveTime = Date.now() - startTime;
-      console.log(`⏱️ [SUPABASE] Tempo de salvamento: ${saveTime}ms`);
-
-      if (error) {
-        console.error('❌ [SUPABASE] Erro ao salvar transcrição:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          dadosEnviados: {
-            nomeArquivo: dados.nomeArquivo,
-            tamanhoTranscricao: dados.transcricao.length
-          }
-        });
-        return false;
+      const palavrasParaEmbed = transcricao.map(p => p.word?.trim()).filter(Boolean);
+      if (palavrasParaEmbed.length === 0) {
+        console.warn('⚠️ [SUPABASE] Nenhuma palavra válida para gerar embeddings.');
+        return true;
       }
 
-      console.log('✅ [SUPABASE] Transcrição salva com sucesso no Supabase');
-      console.log('📊 [SUPABASE] Estatísticas do salvamento:', {
-        tempoProcessamento: `${saveTime}ms`,
-        tamanhoTranscricao: dados.transcricao.length,
-        tamanhoArquivo: `${((dados.tamanhoArquivo || 0) / 1024 / 1024).toFixed(2)} MB`,
-        timestamp: new Date().toLocaleString('pt-BR')
-      });
-      return true;
-    } catch (error) {
-      const errorTime = Date.now();
-      console.error('❌ [SUPABASE] Erro crítico ao salvar transcrição:', {
-        tipo: error.constructor.name,
-        mensagem: error.message,
-        stack: error.stack,
-        dadosOriginais: {
-          nomeArquivo: dados.nomeArquivo,
-          tamanhoTranscricao: dados.transcricao.length,
-          tamanhoArquivo: dados.tamanhoArquivo
-        },
-        timestamp: new Date(errorTime).toLocaleString('pt-BR')
-      });
-      return false;
-    }
-  }
+      const embeddings = await embeddingService.gerarEmbeddingsLote(palavrasParaEmbed);
+      if (embeddings.length !== palavrasParaEmbed.length) {
+        throw new Error('Disparidade entre número de palavras e embeddings gerados.');
+      }
 
-  /**
-   * Salva uma transcrição completa no banco de dados com embeddings
-   */
-  async salvarTranscricaoComEmbeddings(transcricao: any[], nomeArquivo: string): Promise<boolean> {
-    if (!this.conectado || !this.cliente) {
-      console.warn('Supabase não está conectado');
-      return false;
-    }
-
-    // Verificar se transcricao é válida
-    if (!transcricao || !Array.isArray(transcricao) || transcricao.length === 0) {
-      console.error('❌ [SUPABASE] Transcrição inválida ou vazia:', {
-        transcricao: transcricao,
-        isArray: Array.isArray(transcricao),
-        length: transcricao?.length
-      });
-      return false;
-    }
-
-    try {
-      console.log(`🔄 [SUPABASE] Salvando transcrição com embeddings: ${transcricao.length} palavras`);
-      
-      // Gerar um session_id único para esta transcrição
       const sessionId = crypto.randomUUID();
-      
-      // Preparar dados para inserção com embeddings
-      const dadosParaInserir = [];
-      
-      for (let i = 0; i < transcricao.length; i++) {
-        const palavra = transcricao[i];
-        
-        // Validar palavra antes de gerar embedding
-        if (!palavra.word || palavra.word.trim().length === 0) {
-          console.warn(`Palavra vazia detectada no índice ${i}, pulando`);
-          continue;
-        }
-        
-        // Gerar embedding para a palavra
-        const wordEmbedding = await embeddingService.gerarEmbedding(palavra.word.trim());
-        
-        dadosParaInserir.push({
-          word: palavra.word,
-          timestamp: palavra.startTime,
-          start_time: palavra.startTime,
-          context: `Arquivo: ${nomeArquivo}`,
-          playback_rate: 1.0,
-          session_id: sessionId,
-          word_embedding: wordEmbedding
-        });
-        
-        // Log de progresso a cada 50 palavras
-        if ((i + 1) % 50 === 0) {
-          console.log(`📊 [SUPABASE] Processadas ${i + 1}/${transcricao.length} palavras`);
-        }
-      }
+      let embeddingIndex = 0;
+      const dadosParaInserir = transcricao
+        .map(palavra => {
+          if (!palavra.word || !palavra.word.trim()) return null;
+          return {
+            word: palavra.word,
+            start_time: palavra.start,
+            end_time: palavra.end,
+            confidence: palavra.confidence,
+            session_id: sessionId,
+            word_embedding: embeddings[embeddingIndex++],
+            contexto: `Arquivo: ${nomeArquivo}`
+          };
+        })
+        .filter(Boolean);
 
-      // Inserir em lotes menores devido aos embeddings
-      const tamanhoLote = 50;
-      for (let i = 0; i < dadosParaInserir.length; i += tamanhoLote) {
-        const lote = dadosParaInserir.slice(i, i + tamanhoLote);
-        
-        const { error } = await this.cliente
-          .from('word_timestamps')
-          .insert(lote);
-
-        if (error) {
-          console.error(`❌ [SUPABASE] Erro ao salvar lote ${Math.floor(i/tamanhoLote) + 1}:`, error);
-          return false;
-        }
-        
-        console.log(`✅ [SUPABASE] Lote ${Math.floor(i/tamanhoLote) + 1} salvo com sucesso`);
-      }
-
-      console.log(`✅ [SUPABASE] Transcrição completa salva com embeddings: ${transcricao.length} palavras. Session ID: ${sessionId}`);
-      return true;
-    } catch (error) {
-      console.error('❌ [SUPABASE] Erro ao salvar transcrição com embeddings:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Salva uma transcrição completa no banco de dados
-   */
-  async salvarTranscricaoCompleta(transcricao: any[], nomeArquivo: string): Promise<boolean> {
-    if (!this.conectado || !this.cliente) {
-      console.warn('Supabase não está conectado');
-      return false;
-    }
-
-    try {
-      // Gerar um session_id único para esta transcrição
-      const sessionId = crypto.randomUUID();
-      
-      // Preparar dados para inserção em lote
-      const dadosParaInserir = transcricao.map(palavra => ({
-        word: palavra.word,
-        timestamp: palavra.startTime,
-        start_time: palavra.startTime,
-        context: `Arquivo: ${nomeArquivo}`,
-        playback_rate: 1.0,
-        session_id: sessionId
-      }));
-
-      // Inserir em lotes de 100 para evitar sobrecarga
       const tamanhoLote = 100;
       for (let i = 0; i < dadosParaInserir.length; i += tamanhoLote) {
         const lote = dadosParaInserir.slice(i, i + tamanhoLote);
-        
-        const { error } = await this.cliente
-          .from('word_timestamps')
-          .insert(lote);
-
+        const { error } = await this.cliente.from('word_timestamps').insert(lote);
         if (error) {
-          console.error(`Erro ao salvar lote ${Math.floor(i/tamanhoLote) + 1}:`, error);
+          console.error(`❌ [SUPABASE] Erro ao salvar lote de palavras:`, error);
           return false;
         }
       }
 
-      console.log(`Transcrição salva com sucesso! Session ID: ${sessionId}`);
+      const endTime = Date.now();
+      console.log(`🎉 [SUPABASE] Palavras com embeddings salvas. Tempo: ${(endTime - startTime) / 1000}s.`);
       return true;
     } catch (error) {
-      console.error('Erro ao salvar transcrição completa:', error);
+      console.error('❌ [SUPABASE] Erro no processo otimizado de salvar com embeddings:', error);
       return false;
     }
   }
