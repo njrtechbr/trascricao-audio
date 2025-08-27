@@ -262,7 +262,7 @@ class LearningAlgorithmService {
    */
   private async analisarRegistro(registro: any): Promise<void> {
     const palavra = registro.word;
-    const compensacao = registro.compensation_offset;
+    const compensacao = registro.start_time || 0;
     const contexto = registro.context || '';
     const velocidade = registro.playback_rate || 1;
 

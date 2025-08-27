@@ -150,35 +150,25 @@ class SupabaseService {
     }
 
     try {
-      const resultado = await servicoFila.adicionarTarefa({
-        tipo: 'INSERT',
-        tabela: 'word_timestamps',
-        dados: {
-          word: dados.palavra,
-          timestamp: dados.tempoReal,
-          start_time: dados.tempoEsperado,
-          context: dados.contexto,
-          playback_rate: dados.velocidadeReproducao || 1.0
-        },
-        prioridade: 'medium',
-        operacao: async () => {
-          const { error } = await this.cliente
-            .from('word_timestamps')
-            .insert({
-              word: dados.palavra,
-              timestamp: dados.tempoReal,
-              start_time: dados.tempoEsperado,
-              context: dados.contexto,
-              playback_rate: dados.velocidadeReproducao || 1.0
-            });
+      const operacao = async () => {
+        const { error } = await this.cliente
+          .from('word_timestamps')
+          .insert({
+            word: dados.palavra,
+            timestamp: dados.tempoReal,
+            start_time: dados.tempoEsperado,
+            context: dados.contexto,
+            playback_rate: dados.velocidadeReproducao || 1.0,
+          });
 
-          if (error) {
-            throw new Error(`Erro ao registrar sincronização: ${error.message}`);
-          }
-
-          return true;
+        if (error) {
+          throw new Error(`Erro ao registrar sincronização: ${error.message}`);
         }
-      });
+
+        return true;
+      };
+
+      const resultado = await servicoFila.adicionarTarefa(operacao, 'media');
 
       return resultado;
     } catch (error) {
@@ -292,80 +282,71 @@ class SupabaseService {
     }
 
     try {
-      const resultado = await servicoFila.adicionarTarefa({
-        tipo: 'UPSERT',
-        tabela: 'learning_data',
-        dados: {
-          palavra: dados.palavra.toLowerCase(),
-          compensacao: dados.compensacao,
-          contexto: dados.contexto,
-          precisao: dados.precisao
-        },
-        prioridade: 'high',
-        operacao: async () => {
-          // Gerar embeddings para palavra e contexto
-          const wordEmbedding = await embeddingService.gerarEmbedding(dados.palavra.trim());
-          const contextEmbedding = (dados.contexto && dados.contexto.trim().length > 0) 
-            ? await embeddingService.gerarEmbedding(dados.contexto.trim()) 
-            : null;
+      const operacao = async () => {
+        // Gerar embeddings para palavra e contexto
+        const wordEmbedding = await embeddingService.gerarEmbedding(dados.palavra.trim());
+        const contextEmbedding = (dados.contexto && dados.contexto.trim().length > 0)
+          ? await embeddingService.gerarEmbedding(dados.contexto.trim())
+          : null;
 
-          // Verificar se já existe registro para esta palavra
-          const { data: existingData, error: selectError } = await this.cliente
-            .from('learning_data')
-            .select('*')
-            .eq('word', dados.palavra.toLowerCase())
-            .single();
+        // Verificar se já existe registro para esta palavra
+        const { data: existingData, error: selectError } = await this.cliente
+          .from('learning_data')
+          .select('*')
+          .eq('word', dados.palavra.toLowerCase())
+          .single();
 
-          if (selectError && selectError.code !== 'PGRST116') {
-            throw new Error(`Erro ao verificar dados existentes: ${selectError.message}`);
-          }
-
-          if (existingData) {
-            // Atualizar registro existente
-            const novoTotal = (existingData.sample_count || 0) + 1;
-            const novaMedia = existingData.sample_count > 0 
-              ? ((existingData.actual_time * existingData.sample_count) + dados.compensacao) / novoTotal
-              : dados.compensacao;
-            const novaPrecisao = dados.precisao || Math.min(0.95, novoTotal * 0.05);
-
-            const { error } = await this.cliente
-              .from('learning_data')
-              .update({
-                expected_time: existingData.expected_time || 0,
-                actual_time: novaMedia,
-                user_accuracy: novaPrecisao,
-                context: dados.contexto,
-                word_embedding: wordEmbedding,
-                context_embedding: contextEmbedding
-              })
-              .eq('word', dados.palavra.toLowerCase());
-
-            if (error) {
-              throw new Error(`Erro ao atualizar dados de aprendizado: ${error.message}`);
-            }
-          } else {
-            // Criar novo registro com embeddings
-            const { error } = await this.cliente
-              .from('learning_data')
-              .insert({
-                word: dados.palavra.toLowerCase(),
-                expected_time: 0,
-                actual_time: dados.compensacao,
-                user_accuracy: dados.precisao || 0.1,
-                context: dados.contexto,
-                word_embedding: wordEmbedding,
-                context_embedding: contextEmbedding
-              });
-
-            if (error) {
-              throw new Error(`Erro ao criar dados de aprendizado: ${error.message}`);
-            }
-          }
-
-          console.log(`✅ [SUPABASE] Dados de aprendizado salvos com embeddings para palavra: ${dados.palavra}`);
-          return true;
+        if (selectError && selectError.code !== 'PGRST116') {
+          throw new Error(`Erro ao verificar dados existentes: ${selectError.message}`);
         }
-      });
+
+        if (existingData) {
+          // Atualizar registro existente
+          const novoTotal = (existingData.sample_count || 0) + 1;
+          const novaMedia = existingData.sample_count > 0
+            ? ((existingData.actual_time * existingData.sample_count) + dados.compensacao) / novoTotal
+            : dados.compensacao;
+          const novaPrecisao = dados.precisao || Math.min(0.95, novoTotal * 0.05);
+
+          const { error } = await this.cliente
+            .from('learning_data')
+            .update({
+              expected_time: existingData.expected_time || 0,
+              actual_time: novaMedia,
+              user_accuracy: novaPrecisao,
+              context: dados.contexto,
+              word_embedding: wordEmbedding,
+              context_embedding: contextEmbedding
+            })
+            .eq('word', dados.palavra.toLowerCase());
+
+          if (error) {
+            throw new Error(`Erro ao atualizar dados de aprendizado: ${error.message}`);
+          }
+        } else {
+          // Criar novo registro com embeddings
+          const { error } = await this.cliente
+            .from('learning_data')
+            .insert({
+              word: dados.palavra.toLowerCase(),
+              expected_time: 0,
+              actual_time: dados.compensacao,
+              user_accuracy: dados.precisao || 0.1,
+              context: dados.contexto,
+              word_embedding: wordEmbedding,
+              context_embedding: contextEmbedding
+            });
+
+          if (error) {
+            throw new Error(`Erro ao criar dados de aprendizado: ${error.message}`);
+          }
+        }
+
+        console.log(`✅ [SUPABASE] Dados de aprendizado salvos com embeddings para palavra: ${dados.palavra}`);
+        return true;
+      };
+
+      const resultado = await servicoFila.adicionarTarefa(operacao, 'alta');
 
       return resultado;
     } catch (error) {
