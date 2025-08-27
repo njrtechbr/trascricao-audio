@@ -148,7 +148,14 @@ O sistema de linting do Supabase identificou os seguintes avisos de segurança:
 
 **Problema**: As funções não têm o parâmetro `search_path` definido, o que pode representar um risco de segurança.
 
-**Solução Recomendada**: Definir explicitamente o `search_path` nas funções para evitar ataques de injeção de schema.
+**Solução Corrigida**: Definir explicitamente o `search_path` nas funções para evitar ataques de injeção de schema. Execute os seguintes comandos SQL para corrigir o problema:
+
+```sql
+-- Exemplo de correção para uma função (repita para todas as funções afetadas)
+ALTER FUNCTION public.buscar_palavras_similares(text) SET search_path = 'public';
+ALTER FUNCTION public.buscar_aprendizado_similar(text) SET search_path = 'public';
+ALTER FUNCTION public.buscar_transcricoes_similares(text) SET search_path = 'public';
+```
 
 **Documentação**: [Function Search Path Mutable](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable)
 
@@ -156,7 +163,7 @@ O sistema de linting do Supabase identificou os seguintes avisos de segurança:
 
 1. **Configurar RLS (Row Level Security)** em todas as tabelas públicas
 2. **Definir políticas de acesso** baseadas em roles de usuário
-3. **Corrigir o search_path** das funções personalizadas
+3. **Corrigir o search_path** das funções personalizadas (conforme acima)
 4. **Implementar auditoria** de operações sensíveis
 5. **Configurar backup automático** dos dados críticos
 
@@ -184,13 +191,23 @@ O sistema identificou vários índices não utilizados que podem ser removidos p
 - `idx_learning_data_word_embedding`
 - `idx_learning_data_context_embedding`
 
+**Ação Recomendada:**
+Após uma análise cuidadosa para confirmar que os seguintes índices não são utilizados em nenhuma consulta crítica ou ad-hoc, recomenda-se a sua remoção para melhorar a performance de escrita.
+
+```sql
+-- Template para remover um índice:
+DROP INDEX IF EXISTS public.<nome_do_indice>;
+
+-- Exemplo:
+DROP INDEX IF EXISTS public.idx_word_timestamps_word;
+```
+
 ### Recomendações de Performance
 
-1. **Avaliar a necessidade** dos índices não utilizados
-2. **Remover índices desnecessários** para reduzir overhead de escrita
-3. **Monitorar consultas** usando `pg_stat_statements`
-4. **Implementar cache** para consultas frequentes
-5. **Otimizar consultas vetoriais** para melhor performance de busca semântica
+1. **Avaliar e remover** os índices não utilizados (conforme acima)
+2. **Monitorar consultas** usando `pg_stat_statements`
+3. **Implementar cache** para consultas frequentes
+4. **Otimizar consultas vetoriais** para melhor performance de busca semântica
 
 ## Monitoramento e Logs
 

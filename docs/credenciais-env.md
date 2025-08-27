@@ -324,28 +324,3 @@ Para problemas específicos:
 
 **Última Atualização**: Janeiro 2025
 **Versão**: 1.1.0
-
-
-
-ANTHROPIC_API_KEY="your_anthropic_api_key_here"       # Required: Format: sk-ant-api03-...
-PERPLEXITY_API_KEY="your_perplexity_api_key_here"     # Optional: Format: pplx-...
-OPENAI_API_KEY="your_openai_api_key_here"             # Optional, for OpenAI models. Format: sk-proj-...
-GOOGLE_API_KEY="your_google_api_key_here"             # Optional, for Google Gemini models.
-MISTRAL_API_KEY="your_mistral_key_here"               # Optional, for Mistral AI models.
-XAI_API_KEY="YOUR_XAI_KEY_HERE"                       # Optional, for xAI AI models.
-GROQ_API_KEY="YOUR_GROQ_KEY_HERE"                     # Optional, for Groq models.
-# Hugging Face Configuration (Required for embedding features)
-VITE_HUGGINGFACE_API_KEY="hf_YOUR_HUGGINGFACE_TOKEN_HERE"
-HUGGINGFACE_API_KEY="hf_YOUR_HUGGINGFACE_TOKEN_HERE"
-
-OPENROUTER_API_KEY="sk-or-v1-YOUR_OPENROUTER_KEY_HERE"         # Optional, for OpenRouter models.
-AZURE_OPENAI_API_KEY="your_azure_key_here"            # Optional, for Azure OpenAI models (requires endpoint in .taskmaster/config.json).
-OLLAMA_API_KEY="your_ollama_api_key_here"             # Optional: For remote Ollama servers that require authentication.
-GITHUB_API_KEY="your_github_api_key_here"             # Optional: For GitHub import/export features. Format: ghp_... or github_pat_...
-
-
-REACT_APP_SUPABASE_URL=https://uhzqchkehypuqveijegh.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenFjaGtlaHlwdXF2ZWlqZWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzIzODUsImV4cCI6MjA2OTk0ODM4NX0.UPid4S7dfszKpgbEEscu-Jr-os1adzBG4_iRTk0ZkfE
-VITE_SUPABASE_URL=https://uhzqchkehypuqveijegh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenFjaGtlaHlwdXF2ZWlqZWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzIzODUsImV4cCI6MjA2OTk0ODM4NX0.UPid4S7dfszKpgbEEscu-Jr-os1adzBG4_iRTk0ZkfE
-REACT_APP_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoenFjaGtlaHlwdXF2ZWlqZWdoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM3MjM4NSwiZXhwIjoyMDY5OTQ4Mzg1fQ.7uwJADmNUtjVewIrXdVtwGIT6MTUhpTTFWBvbDX7zN8

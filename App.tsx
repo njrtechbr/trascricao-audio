@@ -9,7 +9,7 @@ import { useFeedback } from './components/Feedback';
 import LearningReport from './components/LearningReport';
 import { ToastProvider, useToastNotification } from './components/Toast';
 import { LoadingSpinner, ErrorState, SuccessState } from './components/LoadingSpinner';
-import { transcribe } from './services/whisperService';
+import { transcribe } from './services/geminiTranscriptionService';
 import { summarizeText } from './services/geminiService';
 import { useApiKey } from './contexts/ApiKeyContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -307,19 +307,10 @@ const App: React.FC = () => {
             tamanhoArquivo: `${(dadosSupabase.tamanhoArquivo / 1024 / 1024).toFixed(2)} MB`
           });
           
-          // Salvar transcrição completa com embeddings
-          console.log(`🔄 [PROCESSO] Salvando transcrição completa com embeddings...`);
-          await supabaseService.salvarTranscricaoComEmbeddingCompleto(textoTranscritoCompleto, audioFile.name);
-          
-          // Salvar palavras individuais com embeddings
-          console.log(`🔄 [PROCESSO] Salvando palavras individuais com embeddings...`);
-          await supabaseService.salvarTranscricaoComEmbeddings(transcricaoData, audioFile.name);
-          
-          // Manter compatibilidade com versão sem embeddings
-          await supabaseService.salvarTranscricao(textoTranscritoCompleto, audioFile.name);
-          await supabaseService.salvarTranscricaoCompleta(transcricaoData, audioFile.name);
-          
-          console.log(`✅ [PROCESSO] Dados salvos no Supabase com sucesso (com embeddings)`);
+          // Salvar resultado completo de forma otimizada
+          console.log(`🔄 [PROCESSO] Salvando resultado completo no Supabase de forma otimizada...`);
+          await supabaseService.salvarResultadoCompleto(transcricaoData, textoTranscritoCompleto, audioFile);
+          console.log(`✅ [PROCESSO] Dados salvos no Supabase com sucesso.`);
         } catch (supabaseError) {
           console.error('❌ [PROCESSO] Erro ao salvar no Supabase:', supabaseError);
         }
