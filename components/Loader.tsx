@@ -8,6 +8,7 @@ interface LoaderProps {
 
 const statusMessages: Record<Status, string> = {
   [Status.Transcribing]: 'Transcrevendo o áudio... isso pode levar um momento.',
+  [Status.Saving]: 'Salvando transcrição no banco de dados...',
   [Status.Summarizing]: 'Criando resumo com IA...',
   [Status.Idle]: '',
   [Status.Done]: '',

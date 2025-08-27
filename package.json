@@ -19,18 +19,27 @@
     "build-electron": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
     "pack": "electron-builder --dir",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@google/genai": "^1.15.0",
+    "@huggingface/inference": "^4.7.1",
+    "@supabase/supabase-js": "^2.56.0",
+    "dotenv": "^17.2.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.18.0",
     "concurrently": "^9.2.0",
     "electron": "^37.3.1",
     "electron-builder": "^26.0.12",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "wait-on": "^8.0.4"

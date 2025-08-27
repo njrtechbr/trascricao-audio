@@ -1,0 +1,118 @@
+# Produto: Sistema de Transcrição de Áudio com IA e Sincronização Inteligente
+
+## Visão Geral
+Um sistema desktop desenvolvido em Electron.js que permite transcrever áudios utilizando IA (Google Gemini) e sincronizar a reprodução do áudio com o texto transcrito em tempo real, com aprendizado de máquina para melhorar a precisão da sincronização.
+
+## Objetivos Principais
+- Transcrever áudios com alta precisão usando IA
+- Sincronizar reprodução de áudio com texto em tempo real
+- Implementar sistema de aprendizado para melhorar sincronização
+- Fornecer interface desktop intuitiva e responsiva
+- Armazenar dados de sincronização em banco vetorial
+
+## Funcionalidades Principais
+
+### 1. Transcrição de Áudio
+- Upload de arquivos de áudio (MP3, WAV, etc.)
+- Integração com Google Gemini API para transcrição
+- Geração de timestamps precisos para cada palavra
+- Suporte a diferentes idiomas
+
+### 2. Reprodução Sincronizada
+- Player de áudio integrado
+- Destaque da palavra atual durante reprodução
+- Controle de velocidade de reprodução (0.5x a 2x)
+- Scroll automático para acompanhar o texto
+- Tolerância ajustável para sincronização
+
+### 3. Sistema de IA para Sincronização
+- Análise de padrões de atraso em tempo real
+- Compensação automática baseada em tipo de pontuação
+- Ajuste dinâmico de timestamps
+- Aprendizado contínuo baseado em interações do usuário
+
+### 4. Banco de Dados Vetorial (Supabase)
+- Registro de palavras com timestamps reais e esperados
+- Armazenamento de contexto (posição, frase, palavras adjacentes)
+- Sistema de predição baseado em histórico
+- Análise de similaridade para melhorar precisão
+
+### 5. Interface Desktop (Electron)
+- Interface moderna e responsiva
+- Controles de reprodução intuitivos
+- Visualização clara da transcrição
+- Indicadores visuais de sincronização
+- Configurações personalizáveis
+
+## Requisitos Técnicos
+
+### Frontend
+- React.js com TypeScript
+- Vite para build e desenvolvimento
+- CSS moderno para estilização
+- Componentes reutilizáveis
+
+### Backend/Desktop
+- Electron.js para aplicação desktop
+- Node.js para processamento
+- Integração com APIs externas
+
+### Banco de Dados
+- Supabase como banco vetorial
+- Armazenamento de dados de sincronização
+- Sistema de métricas e aprendizado
+
+### APIs e Serviços
+- Google Gemini API para transcrição
+- Supabase para persistência de dados
+- Sistema de configuração de ambiente
+
+## Arquitetura do Sistema
+
+### Componentes Principais
+1. **TranscriptionDisplay**: Componente principal de exibição
+2. **SyncAiService**: Serviço de IA para sincronização
+3. **VectorDatabaseService**: Serviço de banco vetorial
+4. **SupabaseService**: Configuração e conexão com Supabase
+5. **AudioPlayer**: Controles de reprodução de áudio
+
+### Fluxo de Dados
+1. Upload de áudio → Transcrição via Gemini API
+2. Reprodução de áudio → Sincronização em tempo real
+3. Registro de dados → Banco vetorial Supabase
+4. Análise de padrões → Melhoria da sincronização
+5. Predição baseada em IA → Compensação automática
+
+## Critérios de Sucesso
+- Sincronização precisa entre áudio e texto (±20ms)
+- Interface responsiva e intuitiva
+- Sistema de aprendizado funcional
+- Performance otimizada para arquivos grandes
+- Estabilidade da aplicação desktop
+
+## Tecnologias Utilizadas
+- **Frontend**: React, TypeScript, Vite
+- **Desktop**: Electron.js
+- **IA**: Google Gemini API
+- **Banco**: Supabase (PostgreSQL + Vector)
+- **Build**: electron-builder
+- **Desenvolvimento**: Hot reload, DevTools
+
+## Considerações de Performance
+- Otimização de renderização React
+- Gestão eficiente de memória
+- Processamento assíncrono
+- Cache inteligente de dados
+- Minimização de chamadas à API
+
+## Segurança
+- Variáveis de ambiente para chaves de API
+- Validação de entrada de dados
+- Comunicação segura com APIs
+- Proteção de dados do usuário
+
+## Escalabilidade
+- Arquitetura modular
+- Serviços independentes
+- Possibilidade de extensão para web
+- Sistema de plugins futuro

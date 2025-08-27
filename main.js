@@ -16,6 +16,9 @@ function criarJanelaPrincipal() {
       nodeIntegration: false, // Desabilita integração do Node.js por segurança
       contextIsolation: true, // Habilita isolamento de contexto
       enableRemoteModule: false, // Desabilita módulo remoto por segurança
+      webSecurity: false, // Permite requisições CORS para APIs externas
+      allowRunningInsecureContent: true,
+      experimentalFeatures: true,
       preload: path.join(__dirname, 'preload.js') // Script de preload para comunicação segura
     },
     icon: path.join(__dirname, 'assets', 'icon-256.png'), // Ícone da aplicação
@@ -137,18 +140,32 @@ ipcMain.handle('dialog:saveFile', async (event, defaultPath, content) => {
  * Configurações de segurança
  */
 app.on('web-contents-created', (event, contents) => {
-  // Prevenir navegação para URLs externas
+  // Prevenir navegação para URLs externas (mas permitir requisições de API)
   contents.on('will-navigate', (navigationEvent, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
     
-    if (parsedUrl.origin !== 'http://localhost:5173' && parsedUrl.origin !== 'file://') {
+    // Permitir URLs locais e APIs necessárias
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'file://',
+      'https://api-inference.huggingface.co',
+      'https://router.huggingface.co',
+      'https://huggingface.co',
+      'https://uhzqchkehypuqveijegh.supabase.co'
+    ];
+    
+    const isAllowed = allowedOrigins.some(origin => 
+      parsedUrl.origin === origin || navigationUrl.startsWith(origin)
+    );
+    
+    if (!isAllowed) {
       navigationEvent.preventDefault();
     }
   });
 
   // Prevenir abertura de novas janelas
   contents.setWindowOpenHandler(({ url }) => {
-    // Permitir apenas URLs locais
+    // Permitir URLs locais
     if (url.startsWith('http://localhost:5173') || url.startsWith('file://')) {
       return { action: 'allow' };
     }
