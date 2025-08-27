@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import embeddingService from '../src/services/embeddingService';
-import { servicoFila, TipoOperacao } from './queueService';
+import { servicoFila } from './queueService';
 
 /**
  * Interface para dados de sincronização de palavras
@@ -151,7 +151,7 @@ class SupabaseService {
 
     try {
       const resultado = await servicoFila.adicionarTarefa({
-        tipo: TipoOperacao.INSERT,
+        tipo: 'INSERT',
         tabela: 'word_timestamps',
         dados: {
           word: dados.palavra,
@@ -293,7 +293,7 @@ class SupabaseService {
 
     try {
       const resultado = await servicoFila.adicionarTarefa({
-        tipo: TipoOperacao.UPSERT,
+        tipo: 'UPSERT',
         tabela: 'learning_data',
         dados: {
           palavra: dados.palavra.toLowerCase(),
